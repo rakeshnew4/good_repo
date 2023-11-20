@@ -31,6 +31,7 @@ import com.example.test_app.utils.file_manager;
 import com.example.test_app.utils.fire_base_read;
 import com.example.test_app.utils.firebase_write;
 import com.example.test_app.utils.get_switches_array_list;
+import com.example.test_app.utils.network_check;
 import com.example.test_app.utils.random_ip_select;
 import com.example.test_app.utils.switchesViewAdapter;
 import com.google.firebase.FirebaseApp;
@@ -57,7 +58,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
-    public String radio_button_value="no";
+    public String radio_button_value="yes";
     private Handler handler = new Handler();
     private Runnable runnable;
     private final int delay = 5000;
@@ -88,7 +89,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         FirebaseApp.initializeApp(this);
-//        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        boolean is_net_available = network_check.isNetworkAvailable(getApplicationContext());
+        if(!is_net_available){
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+            radio_button_value = "yes";
+        }
+        else{
+            radio_button_value = "no";
+        }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Button enter_button = (Button) findViewById(R.id.btnOFF);
@@ -97,12 +105,12 @@ public class MainActivity extends AppCompatActivity {
         radioGroup = (RadioGroup)findViewById(R.id.groupradio);
         spinner = (ProgressBar) findViewById(R.id.progressBar1);
         spinner.setVisibility(View.GONE);
-        SharedPreferences sharedPreferences = (SharedPreferences) PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        String server_address = sharedPreferences.getString("server_address", "");
-        String local_address = sharedPreferences.getString("local_address", "");
-        DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference();
-        SharedPreferences my_pref = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        String savedUsername = my_pref.getString("uid", "");
+//        SharedPreferences sharedPreferences = (SharedPreferences) PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+//        String server_address = sharedPreferences.getString("server_address", "");
+//        String local_address = sharedPreferences.getString("local_address", "");
+//        DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference();
+//        SharedPreferences my_pref = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+//        String savedUsername = my_pref.getString("uid", "");
 
 
 //        rootRef.addValueEventListener(new ValueEventListener() {
@@ -151,11 +159,11 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(RadioGroup radioGroup, int checkedId) {
                 RadioButton radioButton = (RadioButton)radioGroup.findViewById(checkedId);
                 if (checkedId== R.id.radia_no) {
-                    radio_button_value = "yes";
+                    radio_button_value = "no";
 
                 }
                 if(checkedId==R.id.radia_yes) {
-                    radio_button_value = "no";
+                    radio_button_value = "yes";
                 }
             }
         });

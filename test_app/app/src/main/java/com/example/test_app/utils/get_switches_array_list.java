@@ -36,7 +36,7 @@ public class get_switches_array_list {
                         String ip_number = switch_data.getString("ip_number");
                         arrayList.add(new switchview(R.drawable.bedroom, switch_name.toString(), room_name, ip_number, pos.toString(), R.drawable.timer_image, pin, switch_id));
                     } catch (JSONException e) {
-                        CustomToast.showShortToast(context.getApplicationContext(), "unable to load "+switch_id);
+                        CustomToast.showShortToast(context.getApplicationContext(), e.toString());
                     }
                 }
             }

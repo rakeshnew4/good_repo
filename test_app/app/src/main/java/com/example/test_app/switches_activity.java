@@ -1,5 +1,6 @@
 package com.example.test_app;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
@@ -37,6 +38,7 @@ import com.example.test_app.utils.trigger_switch;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -91,7 +93,6 @@ public class switches_activity extends AppCompatActivity {
 
         Intent switches  = new Intent(this, switches_activity.class);
         switches.putExtra("room_name",room_name);
-
         try {
             fire_base_read.readData(getApplicationContext(), savedUsername, new fire_base_read.DataCallback() {
                 @Override
@@ -99,7 +100,6 @@ public class switches_activity extends AppCompatActivity {
                     arrayList = get_switches_array_list.get_all_switches_array(getApplicationContext(), room_name, data);
                     adapter = new switchesViewAdapter(getApplicationContext(), arrayList);
                     listView.setAdapter(adapter);
-                    System.out.println("yes");
                 }
                 @Override
                 public void onError(String errorMessage) {
@@ -110,122 +110,241 @@ public class switches_activity extends AppCompatActivity {
         }
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                                            @Override
+                                            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                                                spinner.setVisibility(View.VISIBLE);
+                                                Long d = (Long) adapter.getItemId(i) + 1;
+                                                switchview numbersView = adapter.getItem(i);
+                                                String switch_id = numbersView.getSwitchId();
+                                                String ip_number = numbersView.getIp_number();
+                                                String pin_number = numbersView.getPin_number();
 
-                spinner.setVisibility(View.VISIBLE);
-                Long d = (Long) adapter.getItemId(i) + 1;
-                switchview numbersView = adapter.getItem(i);
-                String switch_id = numbersView.getSwitchId();
-                String ip_number = numbersView.getIp_number();
-                String pin_number = numbersView.getPin_number();
-                String pos = numbersView.get_switch_pos();
-                String switch_name = numbersView.getSwitch_name();
-                try {
-                    pos = get_switches_array_list.update_switch_value(getApplicationContext(),room_name,switch_id,pos);
+                                                String switch_name = numbersView.getSwitch_name();
 
-//                    rootRef.child("devices").child(ip_number).child("counter").setValue(1);
+                                                fire_base_read.readData(getApplicationContext(), savedUsername, new fire_base_read.DataCallback() {
+                                                    @Override
+                                                    public void onDataLoaded(String data) throws JSONException, IOException {
+                                                        JSONObject json_data = new JSONObject(data);
+                                                        int pos = json_data.getJSONObject("devices")
+                                                                .getJSONObject(ip_number).getJSONObject("pins_data").getInt(pin_number);
+                                                        if (pos == 1) {
+                                                            pos = 0;
+                                                        } else {
+                                                            pos = 1;
+                                                        }
+                                                        if (at_home.equalsIgnoreCase("no")) {
 
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                                                            rootRef.child("devices").child(ip_number).child("pins_data").child(pin_number).setValue(pos);
+                                                            int finalPos2 = pos;
+                                                            database.getReference(savedUsername).child("devices").
+                                                                    child(ip_number).child("counter").
+                                                                    addListenerForSingleValueEvent(new ValueEventListener() {
+                                                                        @Override
+                                                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                                            System.out.println(snapshot);
+                                                                            try {
+                                                                                json_data.getJSONObject("rooms")
+                                                                                        .getJSONObject(room_name).getJSONObject("switches").
+                                                                                        getJSONObject(switch_id).put("pos", finalPos2);
+                                                                                arrayList = get_switches_array_list.get_all_switches_array(getApplicationContext(), room_name, json_data.toString());
+                                                                                adapter = new switchesViewAdapter(getApplicationContext(), arrayList);
+                                                                                listView.setAdapter(adapter);
+                                                                                firebase_write.write_data(getApplicationContext(),savedUsername,json_data);
+                                                                                spinner.setVisibility(View.GONE);
 
-                String finalPos = pos;
+                                                                            } catch (
+                                                                                    JSONException e) {
+                                                                                throw new RuntimeException(e);
+                                                                            } catch (
+                                                                                    IOException e) {
+                                                                                throw new RuntimeException(e);
+                                                                            }
 
-                fire_base_read.readData(getApplicationContext(), savedUsername, new fire_base_read.DataCallback() {
-                    @Override
-                    public void onDataLoaded(String data) throws JSONException, IOException {
-                        JSONObject json_data = new JSONObject(data);
-                                 if(at_home.equalsIgnoreCase("yes")) {
 
-                            json_data.getJSONObject("rooms")
-                                    .getJSONObject(room_name).getJSONObject("switches").
-                                    getJSONObject(switch_id).put("pos", finalPos);
-                                     System.out.println(finalPos);
-                            int counter = json_data.getJSONObject("devices").getJSONObject(ip_number).getInt("counter");
-                                 rootRef.child("devices").child(ip_number).child("pins_data").child(pin_number).setValue(finalPos)
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                        @Override
-                                        public void onSuccess(Void aVoid) {
-                                            rootRef.addValueEventListener(new ValueEventListener() {
-                                                @Override
-                                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                                    int new_counter = Integer.parseInt(dataSnapshot.child("devices").child(ip_number).child("counter").getValue().toString());
-                                                    if(new_counter>counter){
-                                                        rootRef.child("rooms").child(room_name).child("switches").child(switch_id).child("pos").setValue(finalPos);
-//                                                        rootRef.child(savedUsername).child("rooms").child(room_name).
-//                                                                child("switches").child(switch_id).child("pos").setValue(finalPos);
-                                                        rootRef.child("devices").child(ip_number).child("counter").setValue(0);
-                                                        JSONObject newdt = new JSONObject((Map) dataSnapshot.getValue());
-                                                       ArrayList<NumbersView> updatedArrayList = get_switches_array_list.get_all_switches_array(getApplicationContext(), room_name, newdt.toString());
-                                                        runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                spinner.setVisibility(View.GONE);
-                                                                adapter.updateData(updatedArrayList);
-                                                                listView.setAdapter(adapter);
+                                                                        }
+
+                                                                        @Override
+                                                                        public void onCancelled(@NonNull DatabaseError error) {
+                                                                        }
+                                                                    });
+                                                        } else {
+                                                            if (pos == 1) {
+                                                                pos = 0;
+                                                            } else {
+                                                                pos = 1;
                                                             }
-                                                        });
-                                                    }
-                                                }
-                                                @Override
-                                                public void onCancelled(@NonNull DatabaseError error) {
-                                                }
-                                            });
-                                        }
-                                    });
-                        }
-                        else{
-                            System.out.println("entered 1");
-                            String arduinoIP = "192.168.1."+ip_number; // Replace with your Arduino's IP address
-                            URL url = new URL("http://" + arduinoIP + "/pin");
-                            String postData = "pin=" + pin_number + "&value=" + finalPos;
-                                ExecutorService executorService = Executors.newFixedThreadPool(5);
-                                Runnable asyncHttpRequest = () -> {
-                                    try {
+                                                            System.out.println("entered 1");
+                                                            String arduinoIP = "192.168.1." + ip_number; // Replace with your Arduino's IP address
+                                                            URL url = new URL("http://" + arduinoIP + "/pin");
+                                                            String postData = "pin=" + pin_number + "&value=" + pos;
+                                                            ExecutorService executorService = Executors.newFixedThreadPool(5);
+                                                            int finalPos = pos;
+                                                            Runnable asyncHttpRequest = () -> {
+                                                                try {
 
-                                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                                        connection.setRequestMethod("POST");
-                                        connection.setDoOutput(true);
-                                        try (OutputStream os = connection.getOutputStream()) {
-                                            byte[] input = postData.getBytes("utf-8");
-                                            os.write(input, 0, input.length);
-                                        }
-                                        int responseCode = connection.getResponseCode();
-                                        if (responseCode==200){
-                                            json_data.getJSONObject("rooms")
-                                                    .getJSONObject(room_name).getJSONObject("switches").
-                                                    getJSONObject(switch_id).put("pos", finalPos);
-                                            ArrayList<NumbersView> updatedArrayList = get_switches_array_list.get_all_switches_array(getApplicationContext(), room_name, json_data.toString());
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    spinner.setVisibility(View.GONE);
-                                                    adapter.updateData(updatedArrayList);
-                                                    listView.setAdapter(adapter);
-                                                }
+                                                                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                                                                    connection.setRequestMethod("POST");
+                                                                    connection.setDoOutput(true);
+                                                                    try (OutputStream os = connection.getOutputStream()) {
+                                                                        byte[] input = postData.getBytes("utf-8");
+                                                                        os.write(input, 0, input.length);
+                                                                    }
+                                                                    int responseCode = connection.getResponseCode();
+                                                                    if (responseCode == 200) {
+                                                                        json_data.getJSONObject("rooms")
+                                                                                .getJSONObject(room_name).getJSONObject("switches").
+                                                                                getJSONObject(switch_id).put("pos", finalPos);
+                                                                        ArrayList<NumbersView> updatedArrayList = get_switches_array_list.get_all_switches_array(getApplicationContext(), room_name, json_data.toString());
+                                                                        runOnUiThread(new Runnable() {
+                                                                            @Override
+                                                                            public void run() {
+                                                                                spinner.setVisibility(View.GONE);
+                                                                                adapter.updateData(updatedArrayList);
+                                                                                listView.setAdapter(adapter);
+                                                                            }
+                                                                        });
+                                                                        rootRef.child("rooms").child(room_name).child("switches").child(switch_id).child("pos").setValue(finalPos);
+                                                                        rootRef.child(savedUsername).child("rooms").child(room_name).
+                                                                                child("switches").child(switch_id).child("pos").setValue(finalPos);
+                                                                        rootRef.child("devices").child(ip_number).child("counter").setValue(finalPos);
+                                                                    }
+                                                                    System.out.println("HTTP Response Code: " + responseCode);
+                                                                    connection.disconnect();
+                                                                } catch (Exception e) {
+                                                                    e.printStackTrace();
+                                                                }
+                                                            };
+                                                            executorService.submit(asyncHttpRequest);
+                                                            executorService.shutdown();
+                                                        }
+
+                                                    }
+
+                                                    @Override
+                                                    public void onError(String errorMessage) {
+
+                                                    }
                                                 });
-                                            rootRef.child("rooms").child(room_name).child("switches").child(switch_id).child("pos").setValue(finalPos);
-                                            rootRef.child(savedUsername).child("rooms").child(room_name).
-                                                    child("switches").child(switch_id).child("pos").setValue(finalPos);
-                                            rootRef.child("devices").child(ip_number).child("counter").setValue(0);
-                                        }
-                                        System.out.println("HTTP Response Code: " + responseCode);
-                                        connection.disconnect();
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                };
-                                executorService.submit(asyncHttpRequest);
-                                executorService.shutdown();
-                            }
-                    }
-                    @Override
-                    public void onError(String errorMessage) {
-                    }
-                });
-            }
-        });
+                                            }
+                                        });
+
+//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//
+//                spinner.setVisibility(View.VISIBLE);
+//                Long d = (Long) adapter.getItemId(i) + 1;
+//                switchview numbersView = adapter.getItem(i);
+//                String switch_id = numbersView.getSwitchId();
+//                String ip_number = numbersView.getIp_number();
+//                String pin_number = numbersView.getPin_number();
+//                String pos = numbersView.get_switch_pos();
+//                String switch_name = numbersView.getSwitch_name();
+//                try {
+//                    pos = get_switches_array_list.update_switch_value(getApplicationContext(),room_name,switch_id,pos);
+//
+////                    rootRef.child("devices").child(ip_number).child("counter").setValue(1);
+//
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//
+//                String finalPos = pos;
+//
+//                fire_base_read.readData(getApplicationContext(), savedUsername, new fire_base_read.DataCallback() {
+//                    @Override
+//                    public void onDataLoaded(String data) throws JSONException, IOException {
+//                        JSONObject json_data = new JSONObject(data);
+//                        if(at_home.equalsIgnoreCase("yes")) {
+//
+//                            json_data.getJSONObject("rooms")
+//                                    .getJSONObject(room_name).getJSONObject("switches").
+//                                    getJSONObject(switch_id).put("pos", finalPos);
+//                            System.out.println(finalPos);
+//                            int counter = json_data.getJSONObject("devices").getJSONObject(ip_number).getInt("counter");
+//                            rootRef.child("devices").child(ip_number).child("pins_data").child(pin_number).setValue(finalPos)
+//                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+//                                        @Override
+//                                        public void onSuccess(Void aVoid) {
+//                                            rootRef.addValueEventListener(new ValueEventListener() {
+//                                                @Override
+//                                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                                                    int new_counter = Integer.parseInt(dataSnapshot.child("devices").child(ip_number).child("counter").getValue().toString());
+//                                                    if(new_counter>counter){
+//                                                        rootRef.child("rooms").child(room_name).child("switches").child(switch_id).child("pos").setValue(finalPos);
+////                                                        rootRef.child(savedUsername).child("rooms").child(room_name).
+////                                                                child("switches").child(switch_id).child("pos").setValue(finalPos);
+//                                                        rootRef.child("devices").child(ip_number).child("counter").setValue(0);
+//                                                        JSONObject newdt = new JSONObject((Map) dataSnapshot.getValue());
+//                                                        ArrayList<NumbersView> updatedArrayList = get_switches_array_list.get_all_switches_array(getApplicationContext(), room_name, newdt.toString());
+//                                                        runOnUiThread(new Runnable() {
+//                                                            @Override
+//                                                            public void run() {
+//                                                                spinner.setVisibility(View.GONE);
+//                                                                adapter.updateData(updatedArrayList);
+//                                                                listView.setAdapter(adapter);
+//                                                            }
+//                                                        });
+//                                                    }
+//                                                }
+//                                                @Override
+//                                                public void onCancelled(@NonNull DatabaseError error) {
+//                                                }
+//                                            });
+//                                        }
+//                                    });
+//                        }
+//                        else{
+//                            System.out.println("entered 1");
+//                            String arduinoIP = "192.168.1."+ip_number; // Replace with your Arduino's IP address
+//                            URL url = new URL("http://" + arduinoIP + "/pin");
+//                            String postData = "pin=" + pin_number + "&value=" + finalPos;
+//                            ExecutorService executorService = Executors.newFixedThreadPool(5);
+//                            Runnable asyncHttpRequest = () -> {
+//                                try {
+//
+//                                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+//                                    connection.setRequestMethod("POST");
+//                                    connection.setDoOutput(true);
+//                                    try (OutputStream os = connection.getOutputStream()) {
+//                                        byte[] input = postData.getBytes("utf-8");
+//                                        os.write(input, 0, input.length);
+//                                    }
+//                                    int responseCode = connection.getResponseCode();
+//                                    if (responseCode==200){
+//                                        json_data.getJSONObject("rooms")
+//                                                .getJSONObject(room_name).getJSONObject("switches").
+//                                                getJSONObject(switch_id).put("pos", finalPos);
+//                                        ArrayList<NumbersView> updatedArrayList = get_switches_array_list.get_all_switches_array(getApplicationContext(), room_name, json_data.toString());
+//                                        runOnUiThread(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                                spinner.setVisibility(View.GONE);
+//                                                adapter.updateData(updatedArrayList);
+//                                                listView.setAdapter(adapter);
+//                                            }
+//                                        });
+//                                        rootRef.child("rooms").child(room_name).child("switches").child(switch_id).child("pos").setValue(finalPos);
+//                                        rootRef.child(savedUsername).child("rooms").child(room_name).
+//                                                child("switches").child(switch_id).child("pos").setValue(finalPos);
+//                                        rootRef.child("devices").child(ip_number).child("counter").setValue(0);
+//                                    }
+//                                    System.out.println("HTTP Response Code: " + responseCode);
+//                                    connection.disconnect();
+//                                } catch (Exception e) {
+//                                    e.printStackTrace();
+//                                }
+//                            };
+//                            executorService.submit(asyncHttpRequest);
+//                            executorService.shutdown();
+//                        }
+//                    }
+//                    @Override
+//                    public void onError(String errorMessage) {
+//                    }
+//                });
+//            }
+//        });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int i, long id) {
@@ -279,8 +398,8 @@ public class switches_activity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-            Intent add_switch_intent = new Intent(switches_activity.this,add_switch.class);
-                            add_switch_intent.putExtra("room_id",room_name);
+                Intent add_switch_intent = new Intent(switches_activity.this,add_switch.class);
+                add_switch_intent.putExtra("room_id",room_name);
                 int REQUEST_CODE = 1;
                 startActivityForResult(add_switch_intent, REQUEST_CODE);
             }
