@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".add_switch">
+
+    <!-- Name EditText -->
+    <EditText
+        android:id="@+id/switch_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="switch name" />
+
+    <Spinner
+        android:id="@+id/spinner"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:backgroundTint="@color/purple_700"
+        android:dropDownWidth="wrap_content"
+        android:hint="@string/hide_bottom_view_on_scroll_behavior"
+        android:spinnerMode="dropdown"
+        android:layout_marginTop="20dp"
+        android:visibility="visible" />
+    <Spinner
+        android:id="@+id/spinner_pin"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:backgroundTint="@color/purple_700"
+        android:dropDownWidth="wrap_content"
+        android:hint="@string/hide_bottom_view_on_scroll_behavior"
+        android:spinnerMode="dropdown"
+        android:layout_marginTop="20dp"
+        android:visibility="visible" />
+
+    <Button
+        android:id="@+id/save"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="save" />
+</LinearLayout>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/switches_activity">
+
+    <!-- Start Time Section -->
+
+    <!-- End Time Section -->
+    <Button
+        android:id="@+id/start_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="35dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/text_view_border"
+        android:backgroundTint="#976060"
+        android:hint="Start time"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/end_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/start_date"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/text_view_border"
+        android:hint="End Time"
+        android:textSize="18sp"
+        android:layout_centerHorizontal="true" />
+
+    <!-- Radio Group -->
+    <RadioGroup
+        android:id="@+id/radio_1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/end_time"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_centerHorizontal="true">
+        <!-- Add radio buttons to the radio group here -->
+    </RadioGroup>
+
+    <!-- Schedule Button -->
+    <Button
+        android:id="@+id/schedule_bt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/radio_1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="Done" />
+
+    <!-- Display Schedule TextView -->
+    <TextView
+        android:id="@+id/display_schedule"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/schedule_bt"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="Display Schedule" />
+
+    <!-- Radio Buttons for Schedule ON and OFF -->
+    <RadioButton
+        android:id="@+id/schedule_on"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/display_schedule"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:checked="true"
+        android:text="Schedule ON" />
+
+    <RadioButton
+        android:id="@+id/schedule_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/schedule_on"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="Schedule OFF" />
+
+</RelativeLayout>
